@@ -1,4 +1,5 @@
 const EventEmitter = require('./lib/EventEmitter.js');
+const conf = require('./lib/const.js');
 const exec = require('./lib/execPromise.js');
 const platform = require('./platforms');
 const Promise = require('es6-promise');
@@ -19,7 +20,10 @@ class Session extends EventEmitter {
     }
 
     logout() {
-        return exec('logout');
+        localStorage.removeItem(conf.REFRESH_TOKEN_LS_NAME);
+        
+        const p = new Promise(res => this.once('loggedout', () => res('success')));
+        return exec('logout').then(() => p);
     }
 
     play(trackUri) {
