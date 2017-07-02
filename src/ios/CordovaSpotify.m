@@ -133,27 +133,13 @@ NSDictionary *sessionToDict(SPTSession* session) {
 
 - (void) seekToPosition:(CDVInvokedUrlCommand*)command {
     @try {
-        NSNumber* seekTo = [command.arguments objectAtIndex:0];
-        if (seekTo != nil && seekTo > 0) {
-            double seekToDbl = [seekTo doubleValue];
-            if(seekToDbl > self.player.metadata.currentTrack.duration) {
-                NSString* strResult = @"Seek position was too far advanced.";
-                CDVPluginResult *result = [CDVPluginResult
-                                           resultWithStatus: CDVCommandStatus_OK
-                                           messageAsString: strResult];
-                [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
-            } else {
-                [self.player seekTo:seekToDbl callback:nil];
-                CDVPluginResult *result = [CDVPluginResult
-                                           resultWithStatus: CDVCommandStatus_OK
-                                           messageAsDouble: seekToDbl];
-                [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
-            }
-        } else {
-            CDVPluginResult *result  = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-            
-            [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
-        }
+        double seekTo = [[command.arguments objectAtIndex:0] doubleValue];
+        NSUInteger dest = self.player.metadata.currentTrack.duration * seekTo;
+        [self.player seekTo:dest callback:nil];
+        CDVPluginResult *result = [CDVPluginResult
+                                   resultWithStatus: CDVCommandStatus_OK
+                                   messageAsDouble: dest];
+        [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
     } @catch (NSException* exception) {
         CDVPluginResult *result  = [CDVPluginResult resultWithStatus:CDVCommandStatus_JSON_EXCEPTION messageAsString:[exception reason]];
         [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
