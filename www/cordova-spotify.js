@@ -13,12 +13,12 @@ class Session extends EventEmitter {
         Object.assign(this, sessionObject);
     }
 
-    seekValueChanged() {
-        return exec('seekValueChanged')
-    }
-    
     getTrackDuration() {
         return exec('getTrackDuration');
+    }
+    
+    seekToPosition(position) {
+    	return exec('seekToPosition');
     }
 
     getPosition() {
