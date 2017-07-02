@@ -39,7 +39,7 @@ NSDictionary *sessionToDict(SPTSession* session) {
 }
 
 - (void) authenticate:(CDVInvokedUrlCommand*)command {
-    NSString* redirectUrl = [command.arguments objectAtIndex:0];
+    NSString* urlScheme = [command.arguments objectAtIndex:0];
     NSString* clientId  = [command.arguments objectAtIndex:1];
     NSArray* scopes     = [command.arguments objectAtIndex:2];
     
@@ -53,7 +53,7 @@ NSDictionary *sessionToDict(SPTSession* session) {
     
     SPTAuth* auth = [SPTAuth defaultInstance];
     auth.clientID = clientId;
-    auth.redirectURL = [NSURL URLWithString: redirectUrl];
+    auth.redirectURL = [NSURL URLWithString: [NSString stringWithFormat:@"%@://callback", urlScheme]];
     auth.requestedScopes = scopes;
     
     if ([command.arguments count] >= 5 &&
@@ -132,19 +132,34 @@ NSDictionary *sessionToDict(SPTSession* session) {
 }
 
 - (void) seekToPosition:(CDVInvokedUrlCommand*)command {
-    CDVPluginResult* pluginResult = nil;
     @try {
-        NSString* echo = [command.arguments objectAtIndex:0];
-        
-        if (echo != nil && [echo length] > 0) {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:echo];
+        NSNumber* seekTo = [command.arguments objectAtIndex:0];
+        if (seekTo != nil && seekTo > 0) {
+            double seekToDbl = [seekTo doubleValue];
+            if(seekToDbl > self.player.metadata.currentTrack.duration) {
+                NSString* strResult = @"Seek position was too far advanced.";
+                CDVPluginResult *result = [CDVPluginResult
+                                           resultWithStatus: CDVCommandStatus_OK
+                                           messageAsString: strResult];
+                [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
+            } else {
+                [self.player seekTo:seekToDbl callback:nil];
+                CDVPluginResult *result = [CDVPluginResult
+                                           resultWithStatus: CDVCommandStatus_OK
+                                           messageAsDouble: seekToDbl];
+                [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
+            }
         } else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+            CDVPluginResult *result  = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+            
+            [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
         }
     } @catch (NSException* exception) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_JSON_EXCEPTION messageAsString:[exception reason]];
+        CDVPluginResult *result  = [CDVPluginResult resultWithStatus:CDVCommandStatus_JSON_EXCEPTION messageAsString:[exception reason]];
+        [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
     }
 }
+
 
 - (void) play:(CDVInvokedUrlCommand*)command {
     __weak CordovaSpotify* _self = self;

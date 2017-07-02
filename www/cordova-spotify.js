@@ -18,7 +18,7 @@ class Session extends EventEmitter {
     }
     
     seekToPosition(position) {
-    	return exec('seekToPosition');
+    	return exec('seekToPosition', [position]);
     }
 
     getPosition() {
